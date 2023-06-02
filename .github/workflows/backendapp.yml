@@ -101,9 +101,8 @@ jobs:
           path: .
 
       - name: 'Login via Azure CLI'
-        uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_RBAC_CREDENTIALS }} # set up AZURE_RBAC_CREDENTIALS secrets in your repository
+          credentials: ${{ secrets.AZURE_RBAC_CREDENTIALS }} # set up AZURE_RBAC_CREDENTIALS secrets in your repository
           
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
