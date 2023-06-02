@@ -101,6 +101,7 @@ jobs:
           path: .
 
       - name: 'Login via Azure CLI'
+        uses: azure/login@v1
         with:
           credentials: ${{ secrets.AZURE_RBAC_CREDENTIALS }} # set up AZURE_RBAC_CREDENTIALS secrets in your repository
           
