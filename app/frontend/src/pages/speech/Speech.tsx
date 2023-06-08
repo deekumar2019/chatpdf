@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, SetStateAction } from "react";
 import { TextField, PrimaryButton, Label, DefaultPalette, Stack, IStackStyles, IStackTokens } from "@fluentui/react";
 import { Checkbox,Panel, DefaultButton,  SpinButton } from "@fluentui/react";
 
@@ -10,6 +10,7 @@ import { AskRequest, Approaches, getSpeechToken, textAnalytics, summarizer } fro
 import { ResultReason } from 'microsoft-cognitiveservices-speech-sdk'
 import * as speechsdk from 'microsoft-cognitiveservices-speech-sdk';
 import { SettingsButton } from "../../components/SettingsButton/SettingsButton";
+var recognizer: speechsdk.SpeechRecognizer
 
 const stackStyles: IStackStyles = {
     root: {
@@ -55,6 +56,7 @@ const Speech = () => {
     const topicsPrompt = "Generate list of topics discussed from text"
     const [scenario, setScenario] = useState<IDropdownOption>();
     const [sentimentMining, setSentimentMining] = useState('')
+    const [language, setLanguage] = useState<IDropdownOption>();
     const [languageExtractiveSummary, setLanguageExtractiveSummary] = useState('')
     const [languageAbstractiveSummary, setLanguageAbstractiveSummary] = useState('')
     const [languagePostCallSummary, setLanguagePostCallSummary] = useState('')
@@ -84,6 +86,35 @@ const Speech = () => {
         { key: 'InsuranceHealthRaw', text: 'Insurance Health Script' },
     ]
 
+    const languages = [
+      { key: 'en-US', text: 'English (USA)' },
+      { key: 'en-GB', text: 'English (UK)' },
+      { key: 'es-ES', text: 'Spanish (Spain)' },
+      { key: 'es-MX', text: 'Spanish (Mexico)' },
+      { key: 'fr-CA', text: 'French (Canada)' },
+      { key: 'fr-FR', text: 'French (France)' },
+      { key: 'it-IT', text: 'Italian (Italy)' },
+      { key: 'ja-JP', text: 'Japanese (Japan)' },
+      { key: 'da-DK', text: 'Danish (Denmark)' },
+      { key: 'wuu-CN', text: 'Chinese (Wu, Simplified)' },
+      { key: 'hi-IN', text: 'Hindi (India)' },
+      { key: 'gu-IN', text: 'Gujarati (India)' },
+      { key: 'te-IN', text: 'Telugu (India)' },
+      { key: 'de-DE', text: 'German (Germany)' },
+      { key: 'el-GR', text: 'Greek (Greece)' },
+      { key: 'ar-EG', text: 'Arabic (Egypt)' },
+      { key: 'el-GR', text: 'Greek (Greece)' },
+      { key: 'ar-IL', text: 'Arabic (Israel)' },
+      { key: 'ar-SA', text: 'Arabic (Saudi Arabia)' },
+      { key: 'cs-CZ', text: 'Czech (Czechia)' },
+      { key: 'ko-KR', text: 'Korean (Korea)' },
+      { key: 'nl-NL', text: 'Dutch (Netherlands)' },
+      { key: 'pt-BR', text: 'Portuguese (Brazil)' },
+      { key: 'pt-PT', text: 'Portuguese (Portugal)' },
+      { key: 'sv-SE', text: 'Swedish (Sweden)' },
+      { key: 'he-IL', text: 'Hebrew (Israel)' },
+  ]
+
     const promptTypes = [
         { key: 'summaryNotes', text: 'Summary Notes'},
         { key: 'participants', text: 'Participants List' },
@@ -101,7 +132,6 @@ const Speech = () => {
     const [nlpText, setNlpText] = useState('')
     const nlpArray: String[] = []
 
-    let recognizer: speechsdk.SpeechRecognizer
 
     const [selectedEmbeddingItem, setSelectedEmbeddingItem] = useState<IDropdownOption>();
 
@@ -201,6 +231,10 @@ const Speech = () => {
           setPromptType(promptTypes[promptTypes.findIndex(i => i.key == 'custom')])
     };
 
+    const setLanguages = (event?: React.FormEvent<HTMLDivElement>, item?: IDropdownOption): void => {
+        setLanguage(item)
+  };
+
     const generateCustomPrompt = async () => {
         setGptPromptSummary('')
         const requestText = JSON.stringify(speechText)
@@ -221,9 +255,13 @@ const Speech = () => {
         let promptName = 'RealTimeSpeechPrompt'
     
         if (promptType?.key == 'custom') {
-          const summary = await summarizer(request, customParsePrompt, String(promptType?.key), '', 'inline', 
-          String(selectedChain?.key), String(selectedEmbeddingItem?.key))
-          setGptPromptSummary(summary)
+          await summarizer(request, customParsePrompt, String(promptType?.key), '', 'inline', 
+          String(selectedChain?.key), String(selectedEmbeddingItem?.key)).then((response) => {
+            setGptPromptSummary(response)
+          }).catch((error) => {
+            console.log(error)
+            setGptPromptSummary(error)
+          })
         } else if (promptType?.key == 'summaryNotes') {
           promptName = 'RtsSummaryNotesPrompt'
         } else if (promptType?.key == 'participants') {
@@ -247,6 +285,26 @@ const Speech = () => {
             String(selectedChain?.key), String(selectedEmbeddingItem?.key))
             setGptPromptSummary(summary)
         }
+
+        // const url = "https://dataaioaics.openai.azure.com/openai/deployments/davinci/completions?api-version=2022-12-01" 
+
+        // const headers = { 'Content-Type': 'application/json', 'api-key': "8b08d4ba474545c8a93a09847e7298db" }
+
+        // const params = {
+        //   prompt: "This is some random text. and some garbage stuff. I am trying to see if this works. tl;dr",
+        //   max_tokens: 1000,
+        //   temperature: 1,
+        // }
+
+        // axios
+        //   .post(url, params, { headers: headers })
+        //   .then((response: { data: { choices: { text: SetStateAction<string | undefined>; }[]; }; }) => {
+        //     setGptPromptSummary(response.data.choices[0].text)
+        //   })
+        //   .catch((error: string) => {
+        //     setGptPromptSummary('FATAL_ERROR amc: ' + error)
+        //     console.log(error)
+        //   })
     }
 
     const setPromptTypes = (event?: React.FormEvent<HTMLDivElement>, item?: IDropdownOption): void => {
@@ -306,13 +364,13 @@ const Speech = () => {
             await getTokenOrRefresh()
         }
         const speechConfig = speechsdk.SpeechConfig.fromAuthorizationToken(speechToken, speechRegion)
-        speechConfig.speechRecognitionLanguage = 'en-US'
+        speechConfig.speechRecognitionLanguage = language ? String(language?.key) : 'en-US'
 
         //Setting below specifies custom speech model ID that is created using Speech Studio
         //speechConfig.endpointId = '';
 
         const audioConfig = speechsdk.AudioConfig.fromDefaultMicrophoneInput()
-        const recognizer = new speechsdk.SpeechRecognizer(speechConfig, audioConfig)
+        recognizer = new speechsdk.SpeechRecognizer(speechConfig, audioConfig)
 
         let resultText = ''
 
@@ -357,16 +415,17 @@ const Speech = () => {
         getTokenOrRefresh()
         setChainTypeOptions(chainType)
         setSelectedChain(chainType[0])
+        setLanguage(languages[0])
         setSelectedEmbeddingItem(embeddingOptions[0])
     }, [])
 
     return (
         <div >
             <div >
-                <div className={styles.oneshotTopSection}>
-                    <h1 className={styles.oneshotTitle}>Real-time Speech Analytics</h1>
+                <div className={styles.speechTopSection}>
+                    <h1 className={styles.speechTitle}>Real-time Speech Analytics</h1>
                 </div>
-                <div className={styles.oneshotBottomSection}>
+                <div className={styles.speechBottomSection}>
                     <div className={styles.commandsContainer}>
                         <SettingsButton className={styles.settingsButton} onClick={() => setIsConfigPanelOpen(!isConfigPanelOpen)} />
                     </div>
@@ -374,7 +433,16 @@ const Speech = () => {
                     <Stack enableScopedSelectors tokens={stackTokens}>
                         <Stack enableScopedSelectors horizontal horizontalAlign="start" styles={stackStyles}>
                             <span style={itemStyles}>
-                                    <Label>Scenarios</Label>&nbsp;&nbsp;&nbsp;&nbsp;
+                                    <Label>Languages</Label>&emsp;
+                                    <Dropdown
+                                        selectedKey={language ? language.key : 'en-us'}
+                                        // eslint-disable-next-line react/jsx-no-bind
+                                        onChange={setLanguages}
+                                        placeholder="Select an Language"
+                                        options={languages}
+                                        styles={dropdownStyles}
+                                    />&emsp; &ensp;
+                                    <Label>Scenarios</Label>&emsp;
                                     <Dropdown
                                         selectedKey={scenario ? scenario.key : 'General'}
                                         // eslint-disable-next-line react/jsx-no-bind
@@ -382,9 +450,12 @@ const Speech = () => {
                                         placeholder="Select an Scenario"
                                         options={scenarioType}
                                         styles={dropdownStyles}
-                                    />&nbsp;&nbsp;&nbsp;&nbsp;
+                                    />&emsp; &ensp;
                                     <PrimaryButton onClick={sttFromMic}>
-                                        Click Here and Start Talking
+                                       Start Talking
+                                    </PrimaryButton> &emsp; &ensp;
+                                    <PrimaryButton onClick={sttStop}>
+                                        Stop Recording
                                     </PrimaryButton>
                             </span>
                         </Stack>
@@ -480,7 +551,7 @@ const Speech = () => {
                         </div>
                         <br/>
                         <SpinButton
-                          className={styles.oneshotSettingsSeparator}
+                          className={styles.speechSettingsSeparator}
                           label="Set the Temperature:"
                           min={0.0}
                           max={1.0}
@@ -488,7 +559,7 @@ const Speech = () => {
                           onChange={onTemperatureChange}
                         />
                         <SpinButton
-                            className={styles.oneshotSettingsSeparator}
+                            className={styles.speechSettingsSeparator}
                             label="Max Length (Tokens):"
                             min={0}
                             max={4000}
