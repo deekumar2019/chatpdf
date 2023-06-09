@@ -36,10 +36,17 @@ jobs:
     - name: 'Checkout GitHub Action'
       uses: actions/checkout@v3
 
-    - name: 'Login via Azure CLI'
-      uses: azure/actions/login@v1
+    #name: 'Login via Azure CLI'
+     # uses: azure/actions/login@v1
+      #with:
+        #creds: ${{ secrets.AZURE_RBAC_CREDENTIALS }} # set up AZURE_RBAC_CREDENTIALS secrets in your repository
+    
+
+     - uses: azure/login@v1
       with:
-        creds: ${{ secrets.AZURE_RBAC_CREDENTIALS }} # set up AZURE_RBAC_CREDENTIALS secrets in your repository
+      creds: '{"clientId":"${{ secrets.CLIENT_ID }}","clientSecret":"${{ secrets.CLIENT_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}","tenantId":"${{ secrets.TENANT_ID }}"}'
+      allow-no-subscriptions: true
+        
 
     - name: Setup Python ${{ env.PYTHON_VERSION }} Environment
       uses: actions/setup-python@v4
